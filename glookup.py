@@ -107,7 +107,7 @@ def print_stats(data, assignment, bucketsize):
 	print 'Distribution:'
 	
 	if not bucketsize:
-		bucketsize = math.floor(maximum/25.0)
+		bucketsize = math.ceil(maximum/25.0)
 	elif bucketsize < 0.1:
 		bucketsize = 0.1
 		
