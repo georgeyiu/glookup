@@ -148,12 +148,13 @@ def main(argv):
 	''' Parse arguments '''
 
 	parser = argparse.ArgumentParser(description='glookup')
-	parser.add_argument('-c', '--course', help='filepath to fetched data')
-	parser.add_argument('-f', '--fetch', action='store_true', 
-						help='fetch glookup data')
+	parser.add_argument('-f', '--fetch', action='store_true',
+						help='fetch glookup data') 
+	parser.add_argument('-c', '--course', 
+						help='filepath to fetched data')
 	parser.add_argument('-s', '--assignment', action='store', 
 						help='specify an assignment')
-	parser.add_argument('-b', '--bucket', action='store', type=float, dest='bucket',
+	parser.add_argument('-b', '--bucket', action='store', type=float, dest='bucket', 
 						help='specify a bucket size')
 	args = parser.parse_args()
 
