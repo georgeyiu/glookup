@@ -34,20 +34,12 @@ def fetch():
 	data['glookup'] = lines
 	firstline = lines[0]
 	classname = firstline[:firstline.find('-')]
-	dirname = classname + '_grades'
-	if not os.path.exists(dirname):
-		os.makedirs(dirname)
-	with open(os.path.join(dirname, 'glookup.txt'), 'w') as f:
-		f.write(glookup_data)
 
 	for line in lines[2:]:
 		assignment = line.split(':')[0].strip()
 		command = 'glookup -s ' + assignment + ' -b 0.1'
 		stdin, stdout, stderr = ssh.exec_command(command)
-		output = stdout.read()
-		with open(os.path.join(dirname, assignment + '.txt'), 'w') as f:
-			f.write(output)
-		output = output.split('\n')
+		output = stdout.read().split('\n')
 		scores = []
 		my_score = 0
 		if len(output) > 1:
