@@ -108,7 +108,9 @@ def print_stats(data, assignment, bucketsize):
 	
 	if not bucketsize:
 		bucketsize = math.floor(maximum/25.0)
-
+	elif bucketsize < 0.1:
+		bucketsize = 0.1
+		
 	start_len = None
 	end_len = None
 	max_count = 0
