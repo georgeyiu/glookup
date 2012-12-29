@@ -10,7 +10,7 @@ import getpass
 import paramiko
 from collections import Counter
 
-def fetch():
+def fetch_data():
 	''' Retrieves and saves all glookup data from servers '''
 
 	while True:
@@ -60,7 +60,8 @@ def fetch():
 			break
 
 	ssh.close()
-	pickle.dump(data, open(classname + '.p', 'wb'))
+	pickle.dump(data, open(classname, 'wb'))
+	print "Success: data saved in file: " + classname
 
 
 def print_stats(data, assignment, bucketsize):
@@ -94,6 +95,7 @@ def print_stats(data, assignment, bucketsize):
 	stdev = round(math.sqrt(average(map(lambda x: (x - mean)**2, scores))), 1)
 	rank = list(reversed(scores)).index(float(your_score)) + 1
 
+	print data['glookup'][0].rstrip()
 	print 'Your score: {0:>20}  (#{1} out of {2})'.format(your_score, rank, num_scores)
 	print 'Mean: {0:>26}'.format(mean)
 	print 'Mode: {0:>26}'.format(mode)
@@ -156,7 +158,7 @@ def main(argv):
 	args = parser.parse_args()
 
 	if args.fetch:
-		fetch()
+		fetch_data()
 	elif args.course:
 		if args.bucket and not args.assignment:
 			parser.error('-b must be used with -s')
