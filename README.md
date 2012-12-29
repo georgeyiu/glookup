@@ -14,14 +14,14 @@ Standard `glookup` commands are supported. An extra argument is needed to specif
 
 First fetch the data from the servers:
 
-```./glookup -f```
+```./glookup.py -f```
 
 Follow on-screen directions. A file with the course name will be created in the current directory. This file should be used as the argument to the -c flag.
 
 The following commands are then available:
 
-```./glookup -c <filepath>```
+```./glookup.py -c <filepath>```
 
-```./glookup -c <filepath> -s <assignment>```
+```./glookup.py -c <filepath> -s <assignment>```
 
-```./glookup -c <filepath> -s <assignment> -b <bucket>```
+```./glookup.py -c <filepath> -s <assignment> -b <bucket>```
