@@ -116,6 +116,7 @@ def print_stats(data, assignment, bucketsize):
 	start = 0
 	end = bucketsize
 	score = scores.pop(0)
+	counting = False
 	while (start <= maximum):
 		count = 0
 		while start <= score and score < end:
@@ -124,8 +125,10 @@ def print_stats(data, assignment, bucketsize):
 				break
 			score = scores.pop(0)
 		if count > max_count:
+			counting = True
 			max_count = count
-		buckets.append((round(start, 1), count))
+		if counting:
+			buckets.append((round(start, 1), count))
 		start += bucketsize
 		end += bucketsize
 
