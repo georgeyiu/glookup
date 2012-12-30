@@ -24,7 +24,8 @@ def fetch_data():
 
 			ssh = paramiko.SSHClient()
 			ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-			ssh.load_host_keys(os.path.expanduser(os.path.join("~", ".ssh", "known_hosts")))
+			ssh.load_host_keys(os.path.expanduser(os.path.join("~", ".ssh", 
+				"known_hosts")))
 			ssh.connect(server, username=user, password=passwd)
 			break
 		except paramiko.AuthenticationException:
@@ -50,13 +51,15 @@ def fetch_data():
 			continue
 
 		scores = []
-		my_score = re.search(r'Your score:[\s]*([0-9.]+)[\s]*', output[1]).group(1)
-		max_possible = re.search(r'Max possible:[\s]*([0-9.]+)', output[10]).group(1)
+		match = re.search(r'Your score:[\s]*([0-9.]+)[\s]*', output[1])
+		your_score = match.group(1)
+		match = re.search(r'Max possible:[\s]*([0-9.]+)', output[10])
+		max_possible = match.group(1)
 		for l in output:
 			match = re.match(r'([\s]*[0-9.]+)[\s-]*[0-9.]+:[\s]*([0-9]+)', l)
 			if match:
 				scores += [float(match.group(1))] * int(match.group(2))
-		data[assignment] = (my_score, max_score, scores)   
+		data[assignment] = (your_score, max_possible, scores)   
 		if assignment == 'Total':
 			break
 
@@ -152,7 +155,8 @@ def parse_arguments():
 	parser = argparse.ArgumentParser(description='glookup')
 	parser.add_argument('-f', '--fetch', action='store_true',
 						help='fetch glookup data') 
-	parser.add_argument('-c', '--course', help="path to file created by 'glookup -f'")
+	parser.add_argument('-c', '--course', 
+						help="path to file created by 'glookup -f'")
 	parser.add_argument('-s', '--assignment', action='store', 
 						help='specify an assignment')
 	parser.add_argument('-b', '--bucket', action='store', type=float, 
