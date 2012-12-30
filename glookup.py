@@ -5,13 +5,16 @@ import re
 import sys
 import math
 import pickle
-import argparse
 import getpass
+import argparse
 import paramiko
-from collections import Counter
+from collections import Counter, defaultdict
 
 def fetch_data():
-	''' Retrieves and saves all glookup data from servers '''
+	''' 
+	Retrieves glookup data of provided account credentials and saves
+	all data in a file with the name of the class in the local directory.
+	'''
 
 	while True:
 		try:
@@ -32,25 +35,23 @@ def fetch_data():
 	glookup_data = stdout.read()
 	lines = glookup_data.split('\n')
 	data['glookup'] = lines
-	firstline = lines[0]
-	classname = firstline[:firstline.find('-')]
+	line1 = lines.pop(0)
+	line2 = lines.pop(0)
+	classname = line1.split('-')[0]
 
-	for line in lines[2:]:
+	for line in lines:
 		assignment = line.split(':')[0].strip()
 		command = 'glookup -s ' + assignment + ' -b 0.1'
 		stdin, stdout, stderr = ssh.exec_command(command)
 		output = stdout.read().split('\n')
+
+		if len(output) <= 1:
+			data[assignment] = (0, 0, [])
+			continue
+
 		scores = []
-		my_score = 0
-		if len(output) > 1:
-			my_score = None
-			match = re.search(r'Your score:[\s]*([0-9.]+)[\s]*', output[1])
-			if match:
-				my_score = match.group(1)
-			max_score = None
-			match = re.search(r'Max possible:[\s]*([0-9.]+)', output[10])
-			if match:
-				max_score = match.group(1)
+		my_score = re.search(r'Your score:[\s]*([0-9.]+)[\s]*', output[1]).group(1)
+		max_possible = re.search(r'Max possible:[\s]*([0-9.]+)', output[10]).group(1)
 		for l in output:
 			match = re.match(r'([\s]*[0-9.]+)[\s-]*[0-9.]+:[\s]*([0-9]+)', l)
 			if match:
@@ -67,97 +68,97 @@ def fetch_data():
 def print_stats(data, assignment, bucketsize):
 	''' Displays statistics for a particular assignment '''
 
-	def average(s): return sum(s) * 1.0 / len(s)
+	def average(s): 
+		return sum(s) * 1.0 / len(s)
+
+	def format32(msg, arg):
+		return msg + str(arg).rjust(32 - len(msg))
+
+	def find_median(lst, num_elements):
+		lower = int(num_elements - 0.5)
+		upper = int(num_elements)
+		return round(average([lst[lower], lst[upper]]), 1)
+
+	def find_bucket(score):
+		return int(score/bucketsize)*bucketsize
 
 	if not assignment:
 		glookup_output = data['glookup']
 		for line in glookup_output:
 			print line.rstrip()
 		return
-	d = data.get(assignment)
-	if not d:
+
+	if not data.get(assignment):
 		print 'There is no assignment {0}.'.format(assignment)
-		sys.exit(2)
+		return
 
-	scores = d[2]
+	(your_score, max_possible, scores) = data[assignment]
+
+	if not scores:
+		print 'Not enough scores have been entered for this assignment'
+		return
+
 	num_scores = len(scores)
-
-	your_score = d[0]
+	rank = scores[::-1].index(float(your_score)) +  1
 	mean = round(average(scores), 1)
-	mode = Counter(scores).most_common(1)[0][0]
-	minimum = scores[0]
-	first_quartile = scores[num_scores/4]  # estimate, should find exact
-	second_quartile = scores[num_scores/2]
-	third_quartile = scores[int(round(num_scores/4.0*3))]
-	maximum = scores[-1]
-	max_possible = d[1]
-
+	counts = Counter(scores).most_common()
+	mode, occurences = counts[0]
+	ambiguous = [x[1] for x in counts].count(occurences) > 1
 	stdev = round(math.sqrt(average(map(lambda x: (x - mean)**2, scores))), 1)
-	rank = list(reversed(scores)).index(float(your_score)) + 1
+	minimum = scores[0]
+	q1 = find_median(scores, num_scores/4.0)
+	q2 = find_median(scores, num_scores/2.0)
+	q3 = find_median(scores, num_scores/4.0*3)
+	maximum = scores[-1]
 
 	print data['glookup'][0].rstrip()
-	print 'Your score: {0:>20}  (#{1} out of {2})'.format(your_score, rank, num_scores)
-	print 'Mean: {0:>26}'.format(mean)
-	print 'Mode: {0:>26}'.format(mode)
-	print 'Standard deviation: {0:>12}'.format(stdev)
-	print 'Minimum: {0:>23}'.format(minimum)
-	print '1st quartile: {0:>18}'.format(first_quartile)
-	print '2nd quartile (median): {0:>9}'.format(second_quartile)
-	print '3rd quartile: {0:>18}'.format(third_quartile)
-	print 'Maximum: {0:>23}'.format(maximum)
-	print 'Max possible: {0:>18}'.format(max_possible)
+	print format32('Your score:', your_score),
+	print ' (#{0} out of {1})'.format(rank, num_scores)
+	print format32('Mean:', mean)
+	print format32('Mode:', mode), 
+	print '(ambiguous)' if ambiguous else ''
+	print format32('Standard deviation:', stdev)
+	print format32('Minimum:', minimum)
+	print format32('1st quartile:', q1)
+	print format32('2nd quartile (median):', q2)
+	print format32('3rd quartile:', q3)
+	print format32('Maximum:', maximum)
+	print format32('Max possible:', max_possible)
 	print 'Distribution:'
 	
-	if not bucketsize:
-		bucketsize = math.ceil(maximum/25.0)
-	elif bucketsize < 0.1:
-		bucketsize = 0.1
-		
-	start_len = None
-	end_len = None
-	max_count = 0
-	buckets = []
-	start = 0
-	end = bucketsize
-	score = scores.pop(0)
-	counting = False
-	while (start <= maximum):
-		count = 0
-		while start <= score and score < end:
-			count += 1
-			if not scores:
-				break
-			score = scores.pop(0)
-		if count > max_count:
-			counting = True
-			max_count = count
-		if counting:
-			buckets.append((round(start, 1), count))
+	bucketsize = max(bucketsize, 0.1) if bucketsize else math.ceil(maximum/25.0)
+
+	bucket_dict = defaultdict(int)
+	for x in scores:
+		bucket_dict[find_bucket(x)] += 1
+
+	largest_bucket = max(bucket_dict.values())
+	start, end = find_bucket(minimum), find_bucket(maximum)
+
+	start_format = '{0:>' + str(len(str(end))+1) + '}'
+	end_format = '{1:>' + str(len(str(end+bucketsize))) + '}'
+	full_format = start_format + ' - ' + end_format + ':{2:>5} {3}'
+
+	while start <= end:
+		count = bucket_dict.get(start, 0)
+		stars = '*' * int(math.ceil(20*(count*1.0/largest_bucket)))
+		print full_format.format(start, start+bucketsize-0.1, count, stars)
 		start += bucketsize
-		end += bucketsize
-
-	start_format = '{0:>' + str(len(str(start))) + '}'
-	end_format = '{1:>' + str(len(str(end))) + '}'
-	for (start, count) in buckets:
-		stars = '*'*int(math.ceil(count*1.0/max_count*20))
-		full_format = start_format + ' - ' + end_format + ':{2:>5} {3}'
-		print full_format.format(start, start + bucketsize, count, stars)
 
 
-def main(argv):
+def parse_arguments():
 	''' Parse arguments '''
 
 	parser = argparse.ArgumentParser(description='glookup')
 	parser.add_argument('-f', '--fetch', action='store_true',
 						help='fetch glookup data') 
-	parser.add_argument('-c', '--course', 
-						help='filepath to fetched data')
+	parser.add_argument('-c', '--course', help="path to file created by 'glookup -f'")
 	parser.add_argument('-s', '--assignment', action='store', 
 						help='specify an assignment')
-	parser.add_argument('-b', '--bucket', action='store', type=float, dest='bucket', 
-						help='specify a bucket size')
+	parser.add_argument('-b', '--bucket', action='store', type=float, 
+						dest='bucket', help='specify a bucket size')
+	
 	args = parser.parse_args()
-
 	if args.fetch:
 		fetch_data()
 	elif args.course:
@@ -166,13 +167,11 @@ def main(argv):
 		try:
 			data = pickle.load(open(args.course, 'rb'))
 		except:
-			parser.error("invalid file {0}. Select data file \
-				fetched by 'glookup -f'".format(args.course))
+			parser.error("invalid file provided to -c".format(args.course))
 		print_stats(data, args.assignment, args.bucket)
 	else:
 		parser.error('-c or -f is required')
 
 
 if __name__ == "__main__":
-   main(sys.argv[1:])
-
+   parse_arguments()
