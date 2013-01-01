@@ -83,7 +83,7 @@ def print_stats(data, assignment, bucketsize):
 		return round(average([lst[lower], lst[upper]]), 1)
 
 	def find_bucket(score):
-		return int(score/bucketsize)*bucketsize
+		return round(int(score/bucketsize)*bucketsize, 1)
 
 	if not assignment:
 		glookup_output = data['glookup']
@@ -129,7 +129,7 @@ def print_stats(data, assignment, bucketsize):
 	print format32('Max possible:', max_possible)
 	print 'Distribution:'
 	
-	bucketsize = max(bucketsize, 0.1) if bucketsize else math.ceil(maximum/25.0)
+	bucketsize = max(bucketsize, 0.1) if bucketsize else math.ceil(maximum/20.0)
 
 	bucket_dict = defaultdict(int)
 	for x in scores:
@@ -137,7 +137,6 @@ def print_stats(data, assignment, bucketsize):
 
 	largest_bucket = max(bucket_dict.values())
 	start, end = find_bucket(minimum), find_bucket(maximum)
-
 	start_format = '{0:>' + str(len(str(end))+1) + '}'
 	end_format = '{1:>' + str(len(str(end+bucketsize))) + '}'
 	full_format = start_format + ' - ' + end_format + ':{2:>5} {3}'
@@ -146,7 +145,7 @@ def print_stats(data, assignment, bucketsize):
 		count = bucket_dict.get(start, 0)
 		stars = '*' * int(math.ceil(20*(count*1.0/largest_bucket)))
 		print full_format.format(start, start+bucketsize-0.1, count, stars)
-		start += bucketsize
+		start = round(start+bucketsize, 1)
 
 
 def parse_arguments():
