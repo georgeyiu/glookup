@@ -11,7 +11,7 @@ import paramiko
 from collections import Counter, defaultdict
 
 def fetch_data():
-	''' 
+	'''
 	Retrieves glookup data of provided account credentials and saves
 	all data in a file with the name of the class in the local directory.
 	'''
@@ -24,7 +24,7 @@ def fetch_data():
 
 			ssh = paramiko.SSHClient()
 			ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-			ssh.load_host_keys(os.path.expanduser(os.path.join("~", ".ssh", 
+			ssh.load_host_keys(os.path.expanduser(os.path.join("~", ".ssh",
 				"known_hosts")))
 			ssh.connect(server, username=user, password=passwd)
 			break
@@ -34,8 +34,9 @@ def fetch_data():
 	data = {}
 	stdin, stdout, stderr = ssh.exec_command('glookup')
 	glookup_data = stdout.read()
-	lines = glookup_data.split('\n')
-	data['glookup'] = lines
+	glookup_lines = glookup_data.strip().split('\n')
+	data['glookup'] = glookup_lines
+	lines = glookup_lines[:]
 	line1 = lines.pop(0)
 	line2 = lines.pop(0)
 	classname = line1.split('-')[0]
@@ -46,12 +47,13 @@ def fetch_data():
 		stdin, stdout, stderr = ssh.exec_command(command)
 		output = stdout.read().split('\n')
 
-		if len(output) <= 1:
+		if len(output) <= 2:
 			data[assignment] = (0, 0, [])
 			continue
 
 		scores = []
 		match = re.search(r'Your score:[\s]*([0-9.]+)[\s]*', output[1])
+		if not match: continue
 		your_score = match.group(1)
 		match = re.search(r'Max possible:[\s]*([0-9.]+)', output[10])
 		max_possible = match.group(1)
@@ -59,19 +61,19 @@ def fetch_data():
 			match = re.match(r'([\s]*[0-9.]+)[\s-]*[0-9.]+:[\s]*([0-9]+)', l)
 			if match:
 				scores += [float(match.group(1))] * int(match.group(2))
-		data[assignment] = (your_score, max_possible, scores)   
+		data[assignment] = (your_score, max_possible, scores)
 		if assignment == 'Total':
 			break
 
 	ssh.close()
 	pickle.dump(data, open(classname, 'wb'))
-	print "Success: data saved in file: " + classname
+	print "Success! You can now run './glookup.py -c " + classname + "'"
 
 
 def print_stats(data, assignment, bucketsize):
 	''' Displays statistics for a particular assignment '''
 
-	def average(s): 
+	def average(s):
 		return sum(s) * 1.0 / len(s)
 
 	def format32(msg, arg):
@@ -87,6 +89,7 @@ def print_stats(data, assignment, bucketsize):
 
 	if not assignment:
 		glookup_output = data['glookup']
+		#print glookup_output
 		for line in glookup_output:
 			print line.rstrip()
 		return
@@ -118,7 +121,7 @@ def print_stats(data, assignment, bucketsize):
 	print format32('Your score:', your_score),
 	print ' (#{0} out of {1})'.format(rank, num_scores)
 	print format32('Mean:', mean)
-	print format32('Mode:', mode), 
+	print format32('Mode:', mode),
 	print '(ambiguous)' if ambiguous else ''
 	print format32('Standard deviation:', stdev)
 	print format32('Minimum:', minimum)
@@ -128,7 +131,7 @@ def print_stats(data, assignment, bucketsize):
 	print format32('Maximum:', maximum)
 	print format32('Max possible:', max_possible)
 	print 'Distribution:'
-	
+
 	bucketsize = max(bucketsize, 0.1) if bucketsize else math.ceil(maximum/20.0)
 
 	bucket_dict = defaultdict(int)
@@ -137,9 +140,9 @@ def print_stats(data, assignment, bucketsize):
 
 	largest_bucket = max(bucket_dict.values())
 	start, end = find_bucket(minimum), find_bucket(maximum)
-	start_format = '{0:>' + str(len(str(end))+1) + '}'
+	start_format = '{0:>' + str(len(str(end))) + '}'
 	end_format = '{1:>' + str(len(str(end+bucketsize))) + '}'
-	full_format = start_format + ' - ' + end_format + ':{2:>5} {3}'
+	full_format = start_format + ' - ' + end_format + ':{2:>6}  {3}'
 
 	while start <= end:
 		count = bucket_dict.get(start, 0)
@@ -153,14 +156,14 @@ def parse_arguments():
 
 	parser = argparse.ArgumentParser(description='glookup')
 	parser.add_argument('-f', '--fetch', action='store_true',
-						help='fetch glookup data') 
-	parser.add_argument('-c', '--course', 
+						help='fetch glookup data')
+	parser.add_argument('-c', '--course',
 						help="path to file created by 'glookup -f'")
-	parser.add_argument('-s', '--assignment', action='store', 
+	parser.add_argument('-s', '--assignment', action='store',
 						help='specify an assignment')
-	parser.add_argument('-b', '--bucket', action='store', type=float, 
+	parser.add_argument('-b', '--bucket', action='store', type=float,
 						dest='bucket', help='specify a bucket size')
-	
+
 	args = parser.parse_args()
 	if args.fetch:
 		fetch_data()
