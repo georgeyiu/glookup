@@ -14,14 +14,14 @@ Most of the standard `glookup` commands are supported. Multiple assignment looku
 
 First fetch the data from the servers:
 
-```./glookup.py -f```
+```python glookup.py -f```
 
 Follow on-screen directions. A file with the course name will be created in the current directory. This file should be used as the argument to the -c flag.
 
 The following commands are then available:
 
-```./glookup.py -c <filepath>```
+```python glookup.py -c <filepath>```
 
-```./glookup.py -c <filepath> -s <assignment>```
+```python glookup.py -c <filepath> -s <assignment>```
 
-```./glookup.py -c <filepath> -s <assignment> -b <bucket>```
+```python glookup.py -c <filepath> -s <assignment> -b <bucket>```
