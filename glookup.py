@@ -43,7 +43,7 @@ def fetch_data():
 
 	for line in lines:
 		assignment = line.split(':')[0].strip()
-		command = 'glookup -s ' + assignment + ' -b 0.1'
+		command = 'glookup -s ' + assignment + ' -b 0.05'
 		stdin, stdout, stderr = ssh.exec_command(command)
 		output = stdout.read().split('\n')
 
@@ -105,6 +105,7 @@ def print_stats(data, assignment, bucketsize):
 		return
 
 	num_scores = len(scores)
+	#print your_score, scores
 	rank = scores[::-1].index(float(your_score)) +  1
 	mean = round(average(scores), 1)
 	counts = Counter(scores).most_common()
