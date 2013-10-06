@@ -1,20 +1,20 @@
 #!/usr/bin/python
 
+import argparse
+import getpass
+import math
 import os
+import paramiko
+import pickle
 import re
 import sys
-import math
-import pickle
-import getpass
-import argparse
-import paramiko
+
 from collections import Counter, defaultdict
 
 def fetch_data():
-    '''
-    Retrieves glookup data of provided account credentials and saves
+    """Retrieves glookup data of provided account credentials and saves
     all data in a file with the name of the class in the local directory.
-    '''
+    """
 
     while True:
         try:
@@ -71,7 +71,7 @@ def fetch_data():
 
 
 def print_stats(data, assignment, bucketsize):
-    ''' Displays statistics for a particular assignment '''
+    """Displays statistics for a particular assignment"""
 
     def average(s):
         return sum(s) * 1.0 / len(s)
@@ -151,7 +151,7 @@ def print_stats(data, assignment, bucketsize):
 
 
 def parse_arguments():
-    ''' Parse arguments '''
+    """Parse command line arguments"""
 
     parser = argparse.ArgumentParser(description='glookup')
     parser.add_argument('-f', '--fetch', action='store_true',
