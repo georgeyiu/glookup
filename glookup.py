@@ -55,7 +55,7 @@ def fetch_data():
         match = re.search(r'Your score:[\s]*([0-9.]+)[\s]*', output[1])
         if not match: continue
         your_score = match.group(1)
-        match = re.search(r'Max possible:[\s]*([0-9.]+)', output[10])
+        match = re.search(r'Nominal max possible:[\s]*([0-9.]+)', output[10])
         max_possible = match.group(1)
         for l in output:
             match = re.match(r'([\s]*[0-9.]+)[\s-]*[0-9.]+:[\s]*([0-9]+)', l)
@@ -89,7 +89,6 @@ def print_stats(data, assignment, bucketsize):
 
     if not assignment:
         glookup_output = data['glookup']
-        #print glookup_output
         for line in glookup_output:
             print line.rstrip()
         return
@@ -105,7 +104,6 @@ def print_stats(data, assignment, bucketsize):
         return
 
     num_scores = len(scores)
-    #print your_score, scores
     rank = scores[::-1].index(float(your_score)) +  1
     mean = round(average(scores), 1)
     counts = Counter(scores).most_common()
